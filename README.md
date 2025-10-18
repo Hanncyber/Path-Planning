@@ -63,7 +63,7 @@ src/run.py	CLI to run a chosen scenario and visualize the result.
 Setup
 python -m venv .venv
 .venv\Scripts\activate     # Windows
-# or
+or
 source .venv/bin/activate  # macOS/Linux
 
 pip install -r requirements.txt

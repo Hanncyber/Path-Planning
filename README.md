@@ -60,6 +60,7 @@ src/tester.py	Visualization using Matplotlib.
 src/run.py	CLI to run a chosen scenario and visualize the result.
 
 ⚙️ How to Run
+
 Setup
 python -m venv .venv
 .venv\Scripts\activate     # Windows

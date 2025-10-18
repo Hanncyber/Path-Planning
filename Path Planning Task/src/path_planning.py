@@ -1,18 +1,12 @@
 from __future__ import annotations
-
 from typing import List
-
 from src.models import CarPose, Cone, Path2D
-
+import math
 
 class PathPlanning:
-    """Student-implemented path planner.
+    """Refactored student path planner.
 
-    You are given the car pose and an array of detected cones, each cone with (x, y, color)
-    where color is 0 for yellow (right side) and 1 for blue (left side). The goal is to
-    generate a sequence of path points that the car should follow.
-
-    Implement ONLY the generatePath function.
+    Generates a sequence of path points for the car based on left (blue) and right (yellow) cones.
     """
 
     def __init__(self, car_pose: CarPose, cones: List[Cone]):
@@ -20,33 +14,88 @@ class PathPlanning:
         self.cones = cones
 
     def generatePath(self) -> Path2D:
-        """Return a list of path points (x, y) in world frame.
+        cx, cy, cyaw = self.car_pose.x, self.car_pose.y, self.car_pose.yaw
 
-        Requirements and notes:
-        - Cones: color==0 (yellow) are on the RIGHT of the track; color==1 (blue) are on the LEFT.
-        - You may be given 2, 1, or 0 cones on each side.
-        - Use the car pose (x, y, yaw) to seed your path direction if needed.
-        - Return a drivable path that stays between left (blue) and right (yellow) cones.
-        - The returned path will be visualized by PathTester.
+        blue_cones = [c for c in self.cones if c.color == 1]
+        yellow_cones = [c for c in self.cones if c.color == 0]
 
-        The path can contain as many points as you like, but it should be between 5-10 meters,
-        with a step size <= 0.5. Units are meters.
+        def track_width_estimate(left, right):
+            n = min(len(left), len(right))
+            if n == 0:
+                return 2.0
+            widths = [math.hypot(left[i].x - right[i].x, left[i].y - right[i].y) for i in range(n)]
+            return sorted(widths)[n//2] * 0.9
 
-        Replace the placeholder implementation below with your algorithm.
-        """
+        width = track_width_estimate(blue_cones, yellow_cones)
 
-        # Default: produce a short straight-ahead path from the current pose.
-        # delete/replace this with your own algorithm.
-        num_points = 25
-        step = 0.5
-        cx = self.car_pose.x
-        cy = self.car_pose.y
-        import math
+        # Case 1: There are no cones
+        if not blue_cones and not yellow_cones:
+            return [(cx + math.cos(cyaw)*0.5*i, cy + math.sin(cyaw)*0.5*i) for i in range(1, 26)]
 
-        path: Path2D = []
-        for i in range(1, num_points + 1):
-            dx = math.cos(self.car_pose.yaw) * step * i
-            dy = math.sin(self.car_pose.yaw) * step * i
-            path.append((cx + dx, cy + dy))
+        # Sorting cones by the distance from the car
+        blue_cones.sort(key=lambda c: math.hypot(c.x-cx, c.y-cy))
+        yellow_cones.sort(key=lambda c: math.hypot(c.x-cx, c.y-cy))
+
+        # Case 2: Uneven cones
+        def add_cones(short_list, long_list, left_side: bool):
+            for i in range(len(long_list) - len(short_list)):
+                idx = min(i, len(long_list)-1)
+                ref = long_list[idx]
+
+                if len(long_list) > 1 and idx < len(long_list)-1:
+                    dx, dy = long_list[idx+1].x - ref.x, long_list[idx+1].y - ref.y
+                elif len(long_list) > 1 and idx > 0:
+                    dx, dy = ref.x - long_list[idx-1].x, ref.y - long_list[idx-1].y
+                else:
+                    dx, dy = math.cos(cyaw), math.sin(cyaw)
+
+                dist = math.hypot(dx, dy)
+                if dist > 1e-6:
+                    dx /= dist
+                    dy /= dist
+
+                nx, ny = (-dy, dx) if left_side else (dy, -dx)
+                short_list.append(Cone(x=ref.x + nx*width, y=ref.y + ny*width, color=1 if left_side else 0))
+
+        if len(blue_cones) < len(yellow_cones):
+            add_cones(blue_cones, yellow_cones, left_side=True)
+        elif len(yellow_cones) < len(blue_cones):
+            add_cones(yellow_cones, blue_cones, left_side=False)
+
+        # Re-sorting after cones are added
+        blue_cones.sort(key=lambda c: math.hypot(c.x-cx, c.y-cy))
+        yellow_cones.sort(key=lambda c: math.hypot(c.x-cx, c.y-cy))
+
+        # midpoints
+        pairs = [(blue_cones[i], yellow_cones[i]) for i in range(min(len(blue_cones), len(yellow_cones)))]
+        midpoints = [((l.x+r.x)/2, (l.y+r.y)/2) for l, r in pairs]
+
+        path = [(cx + math.cos(cyaw)*0.5, cy + math.sin(cyaw)*0.5)]
+        points = [path[-1]] + midpoints
+
+        # Linear interpolation through all the points
+        for i in range(len(points)-1):
+            x0, y0 = points[i]
+            x1, y1 = points[i+1]
+            dist = math.hypot(x1-x0, y1-y0)
+            steps = max(1, int(dist/0.5))
+            for s in range(steps):
+                alpha = s/steps
+                path.append((x0 + alpha*(x1-x0), y0 + alpha*(y1-y0)))
+
+        # Extending the path after the last midpoint
+        if midpoints:
+            last_x, last_y = midpoints[-1]
+            if len(midpoints) > 1:
+                dx, dy = midpoints[-1][0] - midpoints[-2][0], midpoints[-1][1] - midpoints[-2][1]
+            else:
+                dx, dy = midpoints[0][0] - cx, midpoints[0][1] - cy
+
+            length = math.hypot(dx, dy)
+            dx /= length
+            dy /= length
+
+            for i in range(1, 26):
+                path.append((last_x + dx*0.5*i, last_y + dy*0.5*i))
 
         return path

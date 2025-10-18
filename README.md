@@ -58,6 +58,7 @@ src/path_planning.py	The main path generation algorithm.
 src/scenarios.py	Contains all testing scenarios (you can add more).
 src/tester.py	Visualization using Matplotlib.
 src/run.py	CLI to run a chosen scenario and visualize the result.
+
 ⚙️ How to Run
 Setup
 python -m venv .venv
@@ -71,7 +72,7 @@ Run a scenario
 python -m src.run --scenario 1
 
 
-Scenarios are numbered from 1 to 20 by default.
+Scenarios are numbered from 1 to 24 by default.
 
 
 💡 Assumptions

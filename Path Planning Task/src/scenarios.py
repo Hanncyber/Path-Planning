@@ -136,6 +136,44 @@ _SCENARIOS: Dict[str, Tuple[List[Cone], CarPose]] = {
         [Cone(x=0.0, y=2.0, color=0)],
         CarPose(x=0.0, y=0.0, yaw=1.8),
     ),
+
+    "21": (
+        # Three blue cones only — single-side test
+        [
+            Cone(x=2.0, y=1.0, color=1),
+            Cone(x=4.0, y=1.5, color=1),
+            Cone(x=6.0, y=2.0, color=1),
+        ],
+        CarPose(x=0.0, y=0.0, yaw=0.0),
+    ),
+
+    "22": (
+        # Three yellow cones only — mirrored side test
+        [
+            Cone(x=2.0, y=-1.0, color=0),
+            Cone(x=4.0, y=-1.5, color=0),
+            Cone(x=6.0, y=-2.0, color=0),
+        ],
+        CarPose(x=0.0, y=0.0, yaw=0.0),
+    ),
+
+    "23": (
+        # Mixed case — 3 blue cones and 1 yellow
+        [
+            Cone(x=2.0, y=1.0, color=1),
+            Cone(x=4.0, y=1.4, color=1),
+            Cone(x=6.0, y=1.8, color=1),
+            Cone(x=3.0, y=-1.0, color=0),
+        ],
+        CarPose(x=0.0, y=0.0, yaw=0.0),
+    ),
+
+    "24": (
+        # No cones — straight path fallback
+        [],
+        CarPose(x=0.0, y=0.0, yaw=0.0),
+    ),
+
 }
 
 

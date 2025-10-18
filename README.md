@@ -53,11 +53,17 @@ This extension allows the system to handle:
 Three or more cones on one side.
 
 🧱 Project Structure
+
 File	Description
+
 src/models.py	Data classes for CarPose, Cone, and Path2D.
+
 src/path_planning.py	The main path generation algorithm.
+
 src/scenarios.py	Contains all testing scenarios (you can add more).
+
 src/tester.py	Visualization using Matplotlib.
+
 src/run.py	CLI to run a chosen scenario and visualize the result.
 
 ⚙️ How to Run
